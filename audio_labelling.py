@@ -8,7 +8,7 @@ import shutil
 audio_file_type = "Letter" #or change to Number
 
 # audio_files = glob.glob(f"/Users/aryamant/Desktop/Labelling/CA_Audio/*/*{audio_file_type}*.webm")
-audio_files = glob.glob(f"/Users/ethanroy/Documents/Stanford/ROAR-RAN/audio_labelliing/**/RAN_{audio_file_type}*.webm")
+audio_files = glob.glob(f"./**/RAN_{audio_file_type}*.webm")
 
 # Load or create a CSV to store timestamps
 csv_file = f"audio_timestamps_{audio_file_type}.csv"
