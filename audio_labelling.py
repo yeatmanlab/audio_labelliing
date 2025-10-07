@@ -5,16 +5,17 @@ import pandas as pd
 import tempfile
 import shutil
 
-audio_file_type = "Letter" #or change to Letter
+audio_file_type = "Letter" #or change to Number
 
+# audio_files = glob.glob(f"/Users/aryamant/Desktop/Labelling/CA_Audio/*/*{audio_file_type}*.webm")
+audio_files = glob.glob(f"/Users/ethanroy/Documents/Stanford/ROAR-RAN/audio_labelliing/**/RAN_{audio_file_type}*.webm")
 
-audio_files = glob.glob(f"/Users/aryamant/Desktop/Labelling/CA_Audio/*/*{audio_file_type}*.webm")
 # Load or create a CSV to store timestamps
 csv_file = f"audio_timestamps_{audio_file_type}.csv"
 if os.path.exists(csv_file):
     df = pd.read_csv(csv_file, index_col=0)
 else:
-    df = pd.DataFrame(columns=["start_time", "end_time"])
+    df = pd.DataFrame(columns=["start_time", "end_time", "transcript"])
 
 # Progress tracking
 total_files = len(audio_files)
@@ -42,7 +43,9 @@ if unprocessed_files:
     - If the participant **spoke clearly**:
         1. Identify the time **they started and stopped speaking**.
         2. Enter those times (in seconds) into the fields below.
-        3. Click **✅ Save and Next** to move on.
+        3. Enter what they said in the third field, with each word 
+                separated by a space.
+        4. Click **✅ Save and Next** to move on.
     - If the audio is **inaudible**, **empty**, or **not usable**, click **🗑️ Discard and Next** instead.
     """)
 
@@ -58,17 +61,18 @@ if unprocessed_files:
 
     start_time = st.number_input("Start Time (in seconds)", min_value=0.0, step=0.1, value=0.0)
     end_time = st.number_input("End Time (in seconds)", min_value=0.0, step=0.1, value=0.0)
+    transcript = st.text_input("Audio Transcript")
 
     col1, col2 = st.columns(2)
     with col1:
         if st.button("✅ Save and Next"):
-            df.loc[filename] = [start_time, end_time]
+            df.loc[filename] = [start_time, end_time, transcript]
             df.to_csv(csv_file)
             st.rerun()
 
     with col2:
         if st.button("🗑️ Discard and Next"):
-            df.loc[filename] = [0, 0]
+            df.loc[filename] = [0, 0, ""]
             df.to_csv(csv_file)
             st.rerun()
 else:
