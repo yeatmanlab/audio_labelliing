@@ -10,7 +10,7 @@ csv_file = "TrainingLetter_test.csv"
 df = pd.read_csv(csv_file)
 
 # Ensure required columns exist
-for col in ["start_time", "end_time", "graded", "num_errors"]:
+for col in ["use", "start_time", "end_time", "graded", "num_errors"]:
     if col not in df.columns:
         df[col] = None
 
@@ -69,9 +69,10 @@ if not ungraded_rows.empty:
     # --- Save and Next ---
     with col1:
         if st.button("✅ Save and Next"):
-            df.loc[df["audio_file"] == audio_file, ["start_time", "end_time", "graded", "num_errors"]] = [
+            df.loc[df["audio_file"] == audio_file, ["start_time", "end_time", "use", "graded", "num_errors"]] = [
                 start_time,
                 end_time,
+                True,
                 True,
                 num_errors,
             ]
@@ -81,9 +82,10 @@ if not ungraded_rows.empty:
     # --- Discard and Next ---
     with col2:
         if st.button("🗑️ Discard and Next"):
-            df.loc[df["audio_file"] == audio_file, ["start_time", "end_time", "graded", "num_errors"]] = [
+            df.loc[df["audio_file"] == audio_file, ["start_time", "end_time", "use", "graded", "num_errors"]] = [
                 0,
                 0,
+                True,
                 True,
                 0,
             ]
