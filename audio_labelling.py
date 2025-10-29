@@ -4,93 +4,136 @@ import os
 import tempfile
 import shutil
 
-csv_file = "TrainingLetter_test.csv"
+# this should be chosen by the user
+# csv_file = "train_letters.csv"
 
 # --- Load and prepare data ---
-df = pd.read_csv(csv_file)
+# df = pd.read_csv(csv_file)
 
-# Ensure required columns exist
-for col in ["use", "start_time", "end_time", "graded", "num_errors"]:
-    if col not in df.columns:
-        df[col] = None
+csv_file = st.file_uploader("Choose a CSV file", type=["csv"])
 
-# Identify ungraded rows
-ungraded_rows = df[df["graded"].isna() | (df["graded"] == False)]
+# Track whether file is loaded
+if "data" not in st.session_state:
+    st.session_state.data = None
 
-# Sidebar progress
-total_files = len(df)
-completed_files = len(df[df["graded"] == True])
-progress_percent = int((completed_files / total_files) * 100) if total_files else 0
+if csv_file is not None:
+    try:
+        if st.session_state.data is None:
+            st.session_state.data = pd.read_csv(csv_file)
+            df = st.session_state.data
+            # download audio data here download_audio
 
-st.sidebar.title("Progress Tracker")
-st.sidebar.markdown(f"**Completed:** {completed_files} / {total_files}")
-st.sidebar.progress(progress_percent / 100)
+        else:
+            df = st.session_state.data
 
-# --- Main UI ---
-if not ungraded_rows.empty:
-    current_row = ungraded_rows.iloc[0]
-    parent_dir = current_row['parentDir']
-    audio_file = current_row["audio_file"]
-    ground_truth = current_row["groundTruth"]
-    filename = os.path.basename(audio_file)
+        # st.success("File uploaded and loaded successfully!")
+        # st.write("DataFrame head:")
+        # st.dataframe(df.head())
+        # Ensure required columns exist
 
-    st.title("Audio Timestamp Labeling")
-    st.write(f"Now labeling: `{filename}`")
+        data_cols = ["start_time", "end_time", "use", 
+                     "graded", "num_errors","background_noise",
+                     "interrupted","inaudible"]
 
-    st.markdown("""
-    ### Instructions for RAs:
-    - Listen to the full audio clip using the player below.
-    - If the participant **spoke clearly**:
-        1. Identify when they **start and stop speaking**.
-        2. Enter those times (in seconds) below.
-        3. Enter the **number of pronunciation errors** if any.
-        4. Click **✅ Save and Next**.
-    - If the audio is **inaudible** or **unusable**, click **🗑️ Discard and Next** instead.
-    """)
+        for col in data_cols:
+            if col not in df.columns:
+                df[col] = None
 
-    # Temporary copy for Streamlit player
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as tmp_audio:
-        shutil.copy(f"./{parent_dir}/{audio_file}", tmp_audio.name)
-        audio_path = tmp_audio.name
+        # Identify ungraded rows
+        ungraded_rows = df[df["graded"].isna() | (df["graded"] == False)]
 
-    # Display audio player
-    st.audio(audio_path, format="audio/webm")
+        # Sidebar progress
+        total_files = len(df)
+        completed_files = len(df[df["graded"] == True])
+        progress_percent = int((completed_files / total_files) * 100) if total_files else 0
 
-    # Show ground truth text
-    st.markdown(f"**Ground Truth:** {ground_truth}")
+        st.sidebar.title("Progress Tracker")
+        st.sidebar.markdown(f"**Completed:** {completed_files} / {total_files}")
+        st.sidebar.progress(progress_percent / 100)
 
-    # Inputs
-    start_time = st.number_input("Start Time (in seconds)", min_value=0.0, step=0.1)
-    end_time = st.number_input("End Time (in seconds)", min_value=0.0, step=0.1)
-    num_errors = st.number_input("Number of Errors", min_value=0, step=1)
+        # --- Main UI ---
+        if not ungraded_rows.empty:
+            current_row = ungraded_rows.iloc[0]
+            parent_dir = current_row['parentDir']
+            audio_file = current_row["audio_file"]
+            ground_truth = current_row["groundTruth"]
+            filename = os.path.basename(audio_file)
 
-    col1, col2 = st.columns(2)
+            st.title("Audio Timestamp Labeling")
+            st.write(f"Now labeling: `{filename}`")
 
-    # --- Save and Next ---
-    with col1:
-        if st.button("✅ Save and Next"):
-            df.loc[df["audio_file"] == audio_file, ["start_time", "end_time", "use", "graded", "num_errors"]] = [
-                start_time,
-                end_time,
-                True,
-                True,
-                num_errors,
-            ]
-            df.to_csv(csv_file, index=False)
-            st.rerun()
+            st.markdown("""
+            ### Instructions for RAs:
+            - Listen to the full audio clip using the player below.
+            - If the participant **spoke clearly**:
+                1. Identify when they **start and stop speaking**.
+                2. Enter those times (in seconds) below.
+                3. Enter the **number of pronunciation errors** if any.
+                4. Click **✅ Save and Next**.
+            - If the audio is **inaudible** or **unusable**, click **🗑️ Discard and Next** instead.
+            """)
 
-    # --- Discard and Next ---
-    with col2:
-        if st.button("🗑️ Discard and Next"):
-            df.loc[df["audio_file"] == audio_file, ["start_time", "end_time", "use", "graded", "num_errors"]] = [
-                0,
-                0,
-                True,
-                True,
-                0,
-            ]
-            df.to_csv(csv_file, index=False)
-            st.rerun()
+            # Temporary copy for Streamlit player
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as tmp_audio:
+                shutil.copy(f"./audio_data/{parent_dir}/{audio_file}", tmp_audio.name)
+                audio_path = tmp_audio.name
 
-else:
-    st.success("🎉 All audio files have been processed!")
+            # Display audio player
+            st.audio(audio_path, format="audio/webm")
+
+            # Show ground truth text
+            st.markdown(f"**Ground Truth:** {ground_truth}")
+
+            # Inputs
+            start_time = st.number_input("Start Time (in seconds)", min_value=0.0, step=0.1)
+            end_time = st.number_input("End Time (in seconds)", min_value=0.0, step=0.1)
+            num_errors = st.number_input("Number of Errors", min_value=0, step=1)
+
+            # Recording Reliability Flags
+            background_noise_flag = st.checkbox("Background Noise?")
+            interruption_flag = st.checkbox("Interruption?")
+            inaudible_flag = st.checkbox("Recording Inaudible?")
+
+            col1, col2 = st.columns(2)
+
+            # --- Save and Next ---
+            with col1:
+                if st.button("✅ Save and Next"):
+                    df.loc[df["audio_file"] == audio_file, data_cols] = [
+                        start_time,
+                        end_time,
+                        True,
+                        True,
+                        num_errors,
+                        background_noise_flag,
+                        interruption_flag,
+                        inaudible_flag
+                    ]
+                    df.to_csv(csv_file.name, index=False)
+                    st.rerun()
+
+            # --- Discard and Next ---
+            with col2:
+                if st.button("🗑️ Discard and Next"):
+                    df.loc[df["audio_file"] == audio_file, data_cols] = [
+                        0,
+                        0,
+                        False,
+                        True,
+                        0,
+                        background_noise_flag,
+                        interruption_flag,
+                        inaudible_flag
+                    ]
+                    df.to_csv(csv_file.name, index=False)
+                    st.rerun()
+
+        else:
+            st.success("🎉 All audio files have been processed!")
+            st.session_state.data = None
+            # remove downloaded data from local machine when finished
+
+    except Exception as e:
+        st.error(f"Error loading file: {e}")
+
+
