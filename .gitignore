@@ -1,3 +1,5 @@
 .DS_Store
+service_account.json
 *.webm
 *.csv
+__pycache__

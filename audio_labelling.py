@@ -4,12 +4,10 @@ import os
 import tempfile
 import shutil
 
+from download_utils import *
+from glob import glob
+
 # this should be chosen by the user
-# csv_file = "train_letters.csv"
-
-# --- Load and prepare data ---
-# df = pd.read_csv(csv_file)
-
 csv_file = st.file_uploader("Choose a CSV file", type=["csv"])
 
 # Track whether file is loaded
@@ -22,14 +20,16 @@ if csv_file is not None:
             st.session_state.data = pd.read_csv(csv_file)
             df = st.session_state.data
             # download audio data here download_audio
+            # download the audio data from google drive
+            drive_service = set_up_gdrive()
+            # Show a temporary "Downloading data" message
+            with st.status("Downloading data from Google Drive...", expanded=False) as status:
+                df.apply(lambda row: download_ran_file(row, drive_service), axis=1)
+                status.update(label="Download complete!", state="complete", expanded=False)
+
 
         else:
             df = st.session_state.data
-
-        # st.success("File uploaded and loaded successfully!")
-        # st.write("DataFrame head:")
-        # st.dataframe(df.head())
-        # Ensure required columns exist
 
         data_cols = ["start_time", "end_time", "use", 
                      "graded", "num_errors","background_noise",
@@ -129,8 +129,33 @@ if csv_file is not None:
                     st.rerun()
 
         else:
+
+            # give user option to remove audio files from local machine
+            if 'delete_message' not in st.session_state:
+                st.warning("Would you like to delete the uploaded files?")
+
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.button("✅ Yes, delete files"):
+                        
+                        audio_dirs = glob(f"./audio_data/*")
+                        print(audio_dirs)
+                        
+                        for dir in audio_dirs or []:
+                            if os.path.isdir(dir):
+                                shutil.rmtree(dir)
+                        st.success("Files deleted successfully.")
+                        st.session_state.delete_message = True
+                        st.rerun()
+
+                with col2:
+                    if st.button("❌ No, keep files"):
+                        st.info("Files kept on the server.")
+                        st.session_state.delete_message = True
+                        st.rerun()
+
+
             st.success("🎉 All audio files have been processed!")
-            st.session_state.data = None
             # remove downloaded data from local machine when finished
 
     except Exception as e:
