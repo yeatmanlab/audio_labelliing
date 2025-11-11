@@ -6,20 +6,22 @@ This Streamlit app allows research assistants to label when a participant starts
 
 ## 📁 Setup Instructions
 
-### 1. **Download the Data**
+### 1. **Install Google Cloud CLI**
 
-* Download all folders from the following Google Drive link:
-https://drive.google.com/drive/folders/175XzKYtJUalgK1Yw23dN1Y2rlX33MBPN?usp=share_link
-Note: You will need to request access using a Stanford-affiliated Google account.
-* Place the folders in the **same directory** as this `README.md` file and the `audio_labelling.py` script.
+* Install the [Google Cloud CLI](https://cloud.google.com/sdk/docs/install).
+Note: You will need to request to the `som-nero-phi-jyeatman-webcam` cloud project
+* If you do not have access to the cloud project, you can also
+download the data from the Google Drive using a Stanford-affiliated Google account.
+* Place the folders in the **`audio_data`** directory, which should be in the same directory as this `README.md` file and the `audio_labelling.py` script.
 * Your folder structure should look like this:
 
 ```
 /Labelling/
 ├── README.md
 ├── audio_labelling.py
-├── haGCTJT6sYUoVBtuftbldUpKtE82_efschl-hwsch-39691ace/
-└── quaGipSF2vZx7HFKMMQP2Zr3aH62_efschl-hwsch-14e02ac2/
+├── audio_data/
+    ├── haGCTJT6sYUoVBtuftbldUpKtE82_efschl-hwsch-39691ace/
+    └── quaGipSF2vZx7HFKMMQP2Zr3aH62_efschl-hwsch-14e02ac2/
 ```
 
 ### 2. **Install Requirements**
@@ -40,16 +42,9 @@ streamlit run audio_labelling.py
 
 ### 4. **Choose Your Task Type (Letters or Numbers)**
 
-In the file `audio_labelling.py`, go to **line 8** and set the type of task you want to label:
+You will first need to make sure you have a `train_letters.csv` or `train_numbers.csv`. Once you launch the app, you can drag and drop the csv file into the app. This will automatically download the audio data (if you don't have it already) and then launch the app. 
 
-```python
-audio_file_type = "Numbers"  # or change to "Letters"
-```
-
-* Set it to `"Numbers"` to label number-based RAN tasks.
-* Set it to `"Letters"` to label letter-based RAN tasks.
-
-This way, you can divide the work across multiple people—each working on a different type.
+By distributing the audio files across multiple `.csv` files, you can divide the work across multiple people—each working on a different dataset.
 
 ---
 
@@ -61,6 +56,10 @@ This way, you can divide the work across multiple people—each working on a dif
 
   * Enter the **start time** and **end time** in seconds.
   * Click ✅ **Save and Next** to save and move on.
+* Use the checkboxes to indicate whether in the recording:
+  * There is excessive background noise
+  * The participant was interrupted
+  * The clip is inaudible
 * If the clip is **inaudible, empty, or unclear**, click 🗑️ **Discard and Next** instead.
 
 ---

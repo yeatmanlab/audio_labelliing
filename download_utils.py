@@ -4,11 +4,11 @@ import pandas as pd
 
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
-from google.oauth2 import service_account
+import google.auth
 from pathlib import Path
 
 
-def set_up_gdrive(service_account_file):
+def set_up_gdrive():
     """
     Initialize and authenticate a Google Drive API client.
 
@@ -19,9 +19,6 @@ def set_up_gdrive(service_account_file):
 
     Parameters
     ----------
-    service_account_file : str or pathlib.Path
-        Path to the JSON service account key file used for authentication.
-
     Returns
     -------
     googleapiclient.discovery.Resource
@@ -34,13 +31,12 @@ def set_up_gdrive(service_account_file):
     ``'https://www.googleapis.com/auth/drive'`` to allow read/write access.
     """
 
-    # Load service account credentials
-    SERVICE_ACCOUNT_FILE = service_account_file
     SCOPES = ['https://www.googleapis.com/auth/drive']
-
-    creds = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
-
-    # Initialize Google Drive API
+    creds, default_project = google.auth.default(scopes=SCOPES)
+ 
+     # Dynamically switch quota project here:
+    creds = creds.with_quota_project("som-nero-phi-jyeatman-webcam")
+ 
     drive_service = build('drive', 'v3', credentials=creds)
 
     return drive_service

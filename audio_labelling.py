@@ -21,8 +21,7 @@ if csv_file is not None:
             df = st.session_state.data
             # download audio data here download_audio
             # download the audio data from google drive
-            SERVICE_ACCOUNT_FILE = "./service_account.json"
-            drive_service = set_up_gdrive(SERVICE_ACCOUNT_FILE)
+            drive_service = set_up_gdrive()
             # Show a temporary "Downloading data" message
             with st.status("Downloading data from Google Drive...", expanded=False) as status:
                 df.apply(lambda row: download_ran_file(row, drive_service), axis=1)
@@ -157,7 +156,6 @@ if csv_file is not None:
 
 
             st.success("🎉 All audio files have been processed!")
-            st.session_state.data = None
             # remove downloaded data from local machine when finished
 
     except Exception as e:
