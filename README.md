@@ -9,7 +9,12 @@ This Streamlit app allows research assistants to label when a participant starts
 ### 1. **Install Google Cloud CLI**
 
 * Install the [Google Cloud CLI](https://cloud.google.com/sdk/docs/install).
-Note: You will need to request to the `som-nero-phi-jyeatman-webcam` cloud project
+Note: You will need to request to the `som-nero-phi-jyeatman-webcam` cloud project and set up application default credentials. You can do that by running:
+
+```bash
+gcloud auth application-default login \
+ --scopes="https://www.googleapis.com/auth/cloud-platform,https://www.googleapis.com/auth/drive"
+ ```
 * If you do not have access to the cloud project, you can also
 download the data from the Google Drive using a Stanford-affiliated Google account.
 * Place the folders in the **`audio_data`** directory, which should be in the same directory as this `README.md` file and the `audio_labelling.py` script.
