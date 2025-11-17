@@ -71,11 +71,7 @@ By distributing the audio files across multiple `.csv` files, you can divide the
 
 ## ✅ Output
 
-* Your labels are saved automatically to a CSV file named:
-
-```
-audio_timestamps_{task}.csv
-```
+* Your labels are saved automatically to the same CSV file you uploaded when launching the app. 
 
 This file stores the start and end times (or \[0, 0] if discarded) for each processed audio clip.
 
