@@ -22,8 +22,7 @@ def set_up_gdrive():
     Returns
     -------
     googleapiclient.discovery.Resource
-        An authenticated Google Drive API service instance, initialized
-        using the provided service account credentials.
+        An authenticated Google Drive API service instance.
 
     Notes
     -----
