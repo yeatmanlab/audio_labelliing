@@ -137,16 +137,18 @@ def download_file(file_id, drive_service, destination):
     
     # Ensure the destination directory exists
     os.makedirs(os.path.dirname(destination), exist_ok=True)
-    print(destination)
 
-    request = drive_service.files().get_media(fileId=file_id)
-    
-    with open(destination, "wb") as file:
-        downloader = MediaIoBaseDownload(file, request)
-        done = False
-        while not done:
-            status, done = downloader.next_chunk()
-            print(f"Download {int(status.progress() * 100)}% complete.")
+    try:
+        request = drive_service.files().get_media(fileId=file_id)
+        
+        with open(destination, "wb") as file:
+            downloader = MediaIoBaseDownload(file, request)
+            done = False
+            while not done:
+                status, done = downloader.next_chunk()
+                print(f"Download {int(status.progress() * 100)}% complete.")
+    except Exception as e:
+        print(f"Error downloading file {file_id}: {e}")
 
 def download_ran_file(row, drive_service, parentDir_id=None):
     """
@@ -203,7 +205,11 @@ def download_ran_file(row, drive_service, parentDir_id=None):
                 parentDir_id = get_folder_id(folder_name=parentDir, drive_service=drive_service)
         
             file_id = search_file(audio_file, parentDir_id, drive_service)
-            download_file(file_id, drive_service, data_raw_dir / parentDir / audio_file)
+
+            if file_id is not None:
+                download_file(file_id, drive_service, data_raw_dir / parentDir / audio_file)
+            else:
+                print(f"File {audio_file} not found in folder {parentDir}")
 
     except KeyError as e:
         print(f"Error processing RAN task for file at {parentDir}/{audio_file}: {e}")
@@ -218,6 +224,3 @@ def test():
     print(data_raw_dir)
 
     return Path(__file__).resolve().parent
-
-
-test()

@@ -13,6 +13,17 @@ csv_file = st.file_uploader("Choose a CSV file", type=["csv"])
 # Track whether file is loaded
 if "data" not in st.session_state:
     st.session_state.data = None
+if "reset" not in st.session_state:
+    st.session_state.reset = False
+
+default_values = {
+        'start_time': 0.0,
+        'end_time': 0.0,
+        'num_errors': 0.0,
+        'background_noise': False,
+        'inaudible': False,
+        'interruption': False
+    }
 
 if csv_file is not None:
     try:
@@ -33,7 +44,7 @@ if csv_file is not None:
 
         data_cols = ["start_time", "end_time", "use", 
                      "graded", "num_errors","background_noise",
-                     "interrupted","inaudible"]
+                     "interrupted","inaudible","static","truncated"]
 
         for col in data_cols:
             if col not in df.columns:
@@ -85,14 +96,16 @@ if csv_file is not None:
             st.markdown(f"**Ground Truth:** {ground_truth}")
 
             # Inputs
-            start_time = st.number_input("Start Time (in seconds)", min_value=0.0, step=0.1)
-            end_time = st.number_input("End Time (in seconds)", min_value=0.0, step=0.1)
-            num_errors = st.number_input("Number of Errors", min_value=0, step=1)
+            start_time = st.number_input("Start Time (in seconds)", min_value=0.0, step=0.1, key="start_time")
+            end_time = st.number_input("End Time (in seconds)", min_value=0.0, step=0.1, key="end_time")
+            num_errors = st.number_input("Number of Errors", min_value=0, step=1, key="num_errors")
 
             # Recording Reliability Flags
-            background_noise_flag = st.checkbox("Background Noise?")
-            interruption_flag = st.checkbox("Interruption?")
-            inaudible_flag = st.checkbox("Recording Inaudible?")
+            background_noise_flag = st.checkbox("Background Noise?", key="background_noise")
+            interruption_flag = st.checkbox("Interruption?", key="interruption")
+            inaudible_flag = st.checkbox("Recording Inaudible?", key="inaudible")
+            static_flag = st.checkbox("Static in Recording?", key="static")
+            truncated = st.checkbox("Fewer Letters than Ground Truth?", key="truncated")
 
             col1, col2 = st.columns(2)
 
@@ -107,7 +120,9 @@ if csv_file is not None:
                         num_errors,
                         background_noise_flag,
                         interruption_flag,
-                        inaudible_flag
+                        inaudible_flag,
+                        static_flag,
+                        truncated
                     ]
                     df.to_csv(csv_file.name, index=False)
                     st.rerun()
@@ -123,7 +138,9 @@ if csv_file is not None:
                         0,
                         background_noise_flag,
                         interruption_flag,
-                        inaudible_flag
+                        inaudible_flag,
+                        static_flag,
+                        truncated
                     ]
                     df.to_csv(csv_file.name, index=False)
                     st.rerun()
