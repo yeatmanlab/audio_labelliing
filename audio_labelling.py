@@ -13,17 +13,44 @@ csv_file = st.file_uploader("Choose a CSV file", type=["csv"])
 # Track whether file is loaded
 if "data" not in st.session_state:
     st.session_state.data = None
-if "reset" not in st.session_state:
-    st.session_state.reset = False
 
+# Initialize reset flag if not present
+if "reset_inputs" not in st.session_state:
+    st.session_state.reset_inputs = False
+    
+# Initialize session state for inputs if not already set
 default_values = {
+    'start_time': 0.0,
+    'end_time': 0.0,
+    'num_errors': 0,
+    'background_noise': False,
+    'interruption': False,
+    'inaudible': False,
+    'static': False,
+    'truncated': False
+}
+for key, value in default_values.items():
+    if key not in st.session_state:
+        st.session_state[key] = value
+
+def handle_save_or_discard():
+    # Set flag to reset inputs on next rerun
+    st.session_state.reset_inputs = True
+
+def reset_inputs():
+    default_values = {
         'start_time': 0.0,
         'end_time': 0.0,
-        'num_errors': 0.0,
+        'num_errors': 0,
         'background_noise': False,
+        'interruption': False,
         'inaudible': False,
-        'interruption': False
+        'static': False,
+        'truncated': False
     }
+    
+    for key, value in default_values.items():
+        st.session_state[key] = value
 
 if csv_file is not None:
     try:
@@ -95,17 +122,25 @@ if csv_file is not None:
             # Show ground truth text
             st.markdown(f"**Ground Truth:** {ground_truth}")
 
-            # Inputs
-            start_time = st.number_input("Start Time (in seconds)", min_value=0.0, step=0.1, key="start_time")
-            end_time = st.number_input("End Time (in seconds)", min_value=0.0, step=0.1, key="end_time")
-            num_errors = st.number_input("Number of Errors", min_value=0, step=1, key="num_errors")
+            # generate new identifiers for each input
+            widget_key_suffix = current_row.name if hasattr(current_row, 'name') else audio_file
+
+            # Inputs - default values will be used for new keys
+            start_time = st.number_input("Start Time (in seconds)", min_value=0.0, step=0.1, key=f"start_time_{widget_key_suffix}")
+            end_time = st.number_input("End Time (in seconds)", min_value=0.0, step=0.1, key=f"end_time_{widget_key_suffix}")
+            num_errors = st.number_input("Number of Errors", min_value=0, step=1, key=f"num_errors_{widget_key_suffix}")
 
             # Recording Reliability Flags
-            background_noise_flag = st.checkbox("Background Noise?", key="background_noise")
-            interruption_flag = st.checkbox("Interruption?", key="interruption")
-            inaudible_flag = st.checkbox("Recording Inaudible?", key="inaudible")
-            static_flag = st.checkbox("Static in Recording?", key="static")
-            truncated = st.checkbox("Fewer Letters than Ground Truth?", key="truncated")
+            background_noise_flag = st.checkbox("Background Noise?", key=f"background_noise_{widget_key_suffix}")
+            interruption_flag = st.checkbox("Interruption?", key=f"interruption_{widget_key_suffix}")
+            inaudible_flag = st.checkbox("Recording Inaudible?", key=f"inaudible_{widget_key_suffix}")
+            static_flag = st.checkbox("Static in Recording?", key=f"static_{widget_key_suffix}")
+            truncated = st.checkbox("Fewer Letters than Ground Truth?", key=f"truncated_{widget_key_suffix}")
+
+            # reset inputs if flag is set
+            if st.session_state.reset_inputs:
+                reset_inputs()
+                st.session_state.reset_inputs = False
 
             col1, col2 = st.columns(2)
 
@@ -125,6 +160,7 @@ if csv_file is not None:
                         truncated
                     ]
                     df.to_csv(csv_file.name, index=False)
+                    handle_save_or_discard()  # Set flag to reset inputs on next run
                     st.rerun()
 
             # --- Discard and Next ---
@@ -143,6 +179,7 @@ if csv_file is not None:
                         truncated
                     ]
                     df.to_csv(csv_file.name, index=False)
+                    handle_save_or_discard()  # Set flag to reset inputs on next run
                     st.rerun()
 
         else:
