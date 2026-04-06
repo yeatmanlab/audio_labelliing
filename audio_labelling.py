@@ -1,11 +1,8 @@
 import streamlit as st
 import pandas as pd
 import os
-import tempfile
-import shutil
 
-from download_utils import *
-from glob import glob
+from gcs_utils import get_audio_bytes
 
 # this should be chosen by the user
 csv_file = st.file_uploader("Choose a CSV file", type=["csv"])
@@ -27,7 +24,8 @@ default_values = {
     'interruption': False,
     'inaudible': False,
     'static': False,
-    'truncated': False
+    'truncated': False,
+    'good_audio': True
 }
 for key, value in default_values.items():
     if key not in st.session_state:
@@ -46,7 +44,8 @@ def reset_inputs():
         'interruption': False,
         'inaudible': False,
         'static': False,
-        'truncated': False
+        'truncated': False,
+        'good_audio': True
     }
     
     for key, value in default_values.items():
@@ -57,13 +56,6 @@ if csv_file is not None:
         if st.session_state.data is None:
             st.session_state.data = pd.read_csv(csv_file)
             df = st.session_state.data
-            # download audio data here download_audio
-            # download the audio data from google drive
-            drive_service = set_up_gdrive()
-            # Show a temporary "Downloading data" message
-            with st.status("Downloading data from Google Drive...", expanded=False) as status:
-                df.apply(lambda row: download_ran_file(row, drive_service), axis=1)
-                status.update(label="Download complete!", state="complete", expanded=False)
 
 
         else:
@@ -71,7 +63,7 @@ if csv_file is not None:
 
         data_cols = ["start_time", "end_time", "use", 
                      "graded", "num_errors","background_noise",
-                     "interrupted","inaudible","static","truncated"]
+                     "interrupted","inaudible","static","truncated","good_audio"]
 
         for col in data_cols:
             if col not in df.columns:
@@ -111,13 +103,9 @@ if csv_file is not None:
             - If the audio is **inaudible** or **unusable**, click **🗑️ Discard and Next** instead.
             """)
 
-            # Temporary copy for Streamlit player
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as tmp_audio:
-                shutil.copy(f"./audio_data/{parent_dir}/{audio_file}", tmp_audio.name)
-                audio_path = tmp_audio.name
-
-            # Display audio player
-            st.audio(audio_path, format="audio/webm")
+            # Stream audio bytes from GCS
+            audio_bytes = get_audio_bytes(parent_dir, audio_file)
+            st.audio(audio_bytes, format="audio/webm")
 
             # Show ground truth text
             st.markdown(f"**Ground Truth:** {ground_truth}")
@@ -136,6 +124,7 @@ if csv_file is not None:
             inaudible_flag = st.checkbox("Recording Inaudible?", key=f"inaudible_{widget_key_suffix}")
             static_flag = st.checkbox("Static in Recording?", key=f"static_{widget_key_suffix}")
             truncated = st.checkbox("Fewer Letters than Ground Truth?", key=f"truncated_{widget_key_suffix}")
+            good_audio = st.checkbox("Is the audio good enough for hand scoring?", value=True, key=f"good_audio_{widget_key_suffix}")
 
             # reset inputs if flag is set
             if st.session_state.reset_inputs:
@@ -146,7 +135,7 @@ if csv_file is not None:
 
             # --- Save and Next ---
             with col1:
-                if st.button("✅ Save and Next"):
+                if st.button("✅ Useful Audio for \nModel Training- Save and Next"):
                     df.loc[df["audio_file"] == audio_file, data_cols] = [
                         start_time,
                         end_time,
@@ -157,7 +146,8 @@ if csv_file is not None:
                         interruption_flag,
                         inaudible_flag,
                         static_flag,
-                        truncated
+                        truncated,
+                        good_audio
                     ]
                     df.to_csv(csv_file.name, index=False)
                     handle_save_or_discard()  # Set flag to reset inputs on next run
@@ -167,50 +157,24 @@ if csv_file is not None:
             with col2:
                 if st.button("🗑️ Discard and Next"):
                     df.loc[df["audio_file"] == audio_file, data_cols] = [
-                        0,
-                        0,
+                        start_time,
+                        end_time,
                         False,
                         True,
-                        0,
+                        num_errors,
                         background_noise_flag,
                         interruption_flag,
                         inaudible_flag,
                         static_flag,
-                        truncated
+                        truncated,
+                        good_audio
                     ]
                     df.to_csv(csv_file.name, index=False)
                     handle_save_or_discard()  # Set flag to reset inputs on next run
                     st.rerun()
 
         else:
-
-            # give user option to remove audio files from local machine
-            if 'delete_message' not in st.session_state:
-                st.warning("Would you like to delete the uploaded files?")
-
-                col1, col2 = st.columns(2)
-                with col1:
-                    if st.button("✅ Yes, delete files"):
-                        
-                        audio_dirs = glob(f"./audio_data/*")
-                        print(audio_dirs)
-                        
-                        for dir in audio_dirs or []:
-                            if os.path.isdir(dir):
-                                shutil.rmtree(dir)
-                        st.success("Files deleted successfully.")
-                        st.session_state.delete_message = True
-                        st.rerun()
-
-                with col2:
-                    if st.button("❌ No, keep files"):
-                        st.info("Files kept on the server.")
-                        st.session_state.delete_message = True
-                        st.rerun()
-
-
             st.success("🎉 All audio files have been processed!")
-            # remove downloaded data from local machine when finished
 
     except Exception as e:
         st.error(f"Error loading file: {e}")
