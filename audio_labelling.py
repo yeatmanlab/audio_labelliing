@@ -1,8 +1,15 @@
 import streamlit as st
 import pandas as pd
 import os
+import argparse
 
 from gcs_utils import get_audio_bytes
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--gcs-bucket", default="roav-ran-analysis")
+parser.add_argument("--gcs-prefix", default="data/raw/audio_files")
+parser.add_argument("--local-path", default=None, help="If set, load audio from local disk instead of GCS")
+args = parser.parse_args()
 
 # this should be chosen by the user
 csv_file = st.file_uploader("Choose a CSV file", type=["csv"])
@@ -85,6 +92,9 @@ if csv_file is not None:
         if not ungraded_rows.empty:
             current_row = ungraded_rows.iloc[0]
             parent_dir = current_row['parentDir']
+            assessment_pid = current_row['assessment_pid']
+            assessment_uid = current_row['assessment_uid']
+            file_path = current_row['file_path']
             audio_file = current_row["audio_file"]
             ground_truth = current_row["groundTruth"]
             filename = os.path.basename(audio_file)
@@ -104,7 +114,12 @@ if csv_file is not None:
             """)
 
             # Stream audio bytes from GCS
-            audio_bytes = get_audio_bytes(parent_dir, audio_file)
+            if args.local_path:
+                local_file = os.path.join(args.local_path, file_path)
+                with open(local_file, "rb") as f:
+                    audio_bytes = f.read()
+            else:
+                audio_bytes = get_audio_bytes(parent_dir, audio_file, gcs_bucket=args.gcs_bucket, gcs_prefix=args.gcs_prefix)
             st.audio(audio_bytes, format="audio/webm")
 
             # Show ground truth text
