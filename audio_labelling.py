@@ -119,7 +119,8 @@ if csv_file is not None:
                 with open(local_file, "rb") as f:
                     audio_bytes = f.read()
             else:
-                audio_bytes = get_audio_bytes(parent_dir, audio_file, gcs_bucket=args.gcs_bucket, gcs_prefix=args.gcs_prefix)
+                file_dir = "/".join(file_path.split('/')[:-1])
+                audio_bytes = get_audio_bytes(file_dir, audio_file, gcs_bucket=args.gcs_bucket, gcs_prefix=args.gcs_prefix)
             st.audio(audio_bytes, format="audio/webm")
 
             # Show ground truth text
