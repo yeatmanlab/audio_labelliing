@@ -25,8 +25,8 @@ download the older data (pre-March 2026) from the Google Drive using a Stanford-
 ├── README.md
 ├── audio_labelling.py
 ├── audio_data/
-    ├── haGCTJT6sYUoVBtuftbldUpKtE82_efschl-hwsch-39691ace/
-    └── quaGipSF2vZx7HFKMMQP2Zr3aH62_efschl-hwsch-14e02ac2/
+    ├── pid_001/
+    └── pid_002/
 ```
 
 ### 2. **Install Requirements**
