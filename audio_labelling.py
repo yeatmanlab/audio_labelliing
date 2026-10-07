@@ -6,8 +6,8 @@ import argparse
 from gcs_utils import get_audio_bytes
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--gcs-bucket", default="roav-ran-analysis")
-parser.add_argument("--gcs-prefix", default="data/raw/audio_files")
+parser.add_argument("--gcs-bucket", default="roar-assessment-recordings-prod")
+parser.add_argument("--gcs-prefix", default="ran")
 parser.add_argument("--local-path", default=None, help="If set, load audio from local disk instead of GCS")
 args = parser.parse_args()
 
