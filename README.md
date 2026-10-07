@@ -12,8 +12,7 @@ This Streamlit app allows research assistants to label when a participant starts
 Note: You will need to request to the `som-nero-phi-jyeatman-webcam` and/or the `gse-roar-assessment` cloud project and set up application default credentials. You can do that by running:
 
 ```bash
-gcloud auth application-default login \
- --scopes="https://www.googleapis.com/auth/cloud-platform,https://www.googleapis.com/auth/drive"
+gcloud auth application-default login 
  ```
 * If you do not have access to the cloud project, you can also
 download the older data (pre-March 2026) from the Google Drive using a Stanford-affiliated Google account. You can download newer data from the ROAR-Assessment Google Cloud Project. 
